@@ -7,18 +7,18 @@ public class ParallelSearch {
         SimpleBlockingQueue<Integer> queue = new SimpleBlockingQueue<Integer>(1);
         final Thread consumer = new Thread(
                 () -> {
-                    while (true) {
+                    while (!Thread.interrupted()) {
                         try {
                             System.out.println(queue.poll());
                         } catch (InterruptedException e) {
-                            break;
+                            Thread.currentThread().interrupt();
                         }
                     }
                 }
         );
         consumer.start();
 
-        new Thread(
+        final Thread producer = new Thread(
                 () -> {
                     for (int index = 0; index != 3; index++) {
                         try {
@@ -32,9 +32,11 @@ public class ParallelSearch {
                             e.printStackTrace();
                         }
                     }
-                    consumer.interrupt();
                 }
-
-        ).start();
+        );
+        producer.start();
+        producer.join();
+        consumer.interrupt();
+        consumer.join();
     }
 }
